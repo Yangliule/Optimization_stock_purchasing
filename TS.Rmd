@@ -1,0 +1,1477 @@
+---
+title: "349 Final"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results="hide"}
+library(readxl)
+library(TSA)
+library(gdata)
+library(tidyr)
+library(xts)
+library(tseries)
+```
+
+# 1 Steps 1-3
+
+## 1.1 Dataset 1, stock DUK
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 1)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+
+mpq2 <- garch(x=data_ts,order=c(1,2))
+
+mpq3 <- garch(x=data_ts,order=c(2,1))
+
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.1.1 The best fitted model is GARCH(1,2) with the following estimated parameter values and standard errors.
+
+### Note that Even the p-val for a2 in GARCH(1,2) is huge, but I still choose it. This is because of two reasons. First,the estimated coefficient is very small (3.226e-11), making the effect of 2a not significant. Second, since GARCH(1,2) produces a relatively low sum of squared residuals and the tradoff is kind of worth it.
+```{r}
+summary(mpq2)
+```
+
+```{r}
+write.csv(residuals(mpq2), "residual1.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res1 = as.numeric(residuals(mpq2))
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+```
+
+### We don't choose GARCH(1,1) or GARCH(2,1) because they have higher sum of squared residuals than that of GARCH(1,2). Even though GARCH(2,2) has smaller sum of squared residuals, it cannot be chosen since it cannot produce meaningful volatility in the summary() of the model. The summary of model GARCH(2,2) will be shown in this section as well, and you can see it produced NA for all standard deviations and p-values.
+
+### Note that Even the p-val for a2 in GARCH(1,2) is huge, but I still choose it. This is because of two reasons. First,the estimated coefficient if very small (3.226e-11), making the effect of 2a not significant. Second, since GARCH(1,2) produces a relatively low sum of squared residuals and the tradoff is kind of worth it.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq4)
+summary(mpq2)
+```
+
+### 1.1.2 Some diagnostic results
+
+According to the standarized residuals, there is no apparent residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 2 and 14
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates platykurtic since it's less than 3. 
+
+```{r}
+plot(residuals(mpq2),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq2))
+qqline(residuals(mpq2))
+```
+
+```{r}
+acf(residuals(mpq2)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq2,method="squared")
+```
+
+```{r}
+gBox(mpq2,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq2)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq2)))
+```
+
+
+## 1.2 Dataset 2, stock MSFT
+
+```{r, results="hide"}
+data2 = read_xlsx("LiuleYang.xlsx",sheet = 2)
+data2 = data2 %>% drop_na()
+data_ts2 = as.ts(data2$`log return`)
+mpq1 <- garch(x=data_ts2,order=c(1,1))
+
+mpq2 <- garch(x=data_ts2,order=c(1,2))
+
+mpq3 <- garch(x=data_ts2,order=c(2,1))
+
+mpq4 <- garch(x=data_ts2,order=c(2,2))
+```
+
+### 1.2.1 The best fitted model is GARCH(1,2) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq2)
+```
+```{r}
+write.csv(residuals(mpq2), "residual2.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+```
+
+### The reason to choose GARCH(1,2) is that is has the smallest sum of squared residuals. Besides, it can also produce meaningful volitilities.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+
+```
+
+### 1.2.2 Some diagnostic results
+
+
+According to the standarized residuals, there might be a increasing apparent residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 25
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has heavier tails than a normal distribution. 
+```{r}
+plot(residuals(mpq2),type="h",ylab="standardized residuals")
+```
+
+
+```{r}
+qqnorm(residuals(mpq2))
+qqline(residuals(mpq2))
+```
+
+
+```{r}
+acf(residuals(mpq2)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq2,method="squared")
+```
+
+```{r}
+gBox(mpq2,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq2)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq2)))
+```
+
+## 1.3 Dataset 3, stock TMO
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 3)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+mpq2 <- garch(x=data_ts,order=c(1,2))
+mpq3 <- garch(x=data_ts,order=c(2,1))
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.3.1 The best fitted model is GARCH(1,1) with the following estimated parameter values and standard errors
+```{r}
+summary(mpq1)
+```
+```{r}
+write.csv(residuals(mpq1), "residual3.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq1$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,1) is that it has the smallest sum of squared residuals, and it can also produce meaningful volitilities.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+
+```
+
+### 1.3.2 Some diagnostic results
+
+
+According to the standarized residuals, there might be a increasing apparent residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there are no significant lags
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has a little bit heavier tails than a normal distribution.
+```{r}
+plot(residuals(mpq1),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq1))
+qqline(residuals(mpq1))
+```
+
+```{r}
+acf(residuals(mpq1)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq1,method="squared")
+```
+
+```{r}
+gBox(mpq1,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq1)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq1)))
+```
+
+## 1.4 Dataset 4, stock TXN
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 4)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+mpq2 <- garch(x=data_ts,order=c(1,2))
+mpq3 <- garch(x=data_ts,order=c(2,1))
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.4.1 The best fitted model is GARCH(2,2) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq4)
+```
+```{r}
+write.csv(residuals(mpq4), "residual4.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq4$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(2,2) is that it has the smallest sum of squared residuals, and it can produce meaningful volitilities.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+
+```
+
+### 1.4.2 Some diagnostic results
+
+
+According to the standarized residuals, there might not be a apparent residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be no significant lags
+
+Skewness shows that the data is slightly skewed to left,and kurtosis test indicates the data has a little bit heavier tails than a normal distribution.
+
+```{r}
+plot(residuals(mpq4),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq4))
+qqline(residuals(mpq4))
+```
+
+```{r}
+acf(residuals(mpq4)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq4,method="squared")
+```
+
+```{r}
+gBox(mpq4,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq4)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq4)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq4)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq4)))
+```
+
+## 1.5 Dataset 5, stock USB
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 5)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+
+mpq2 <- garch(x=data_ts,order=c(1,2))
+
+mpq3 <- garch(x=data_ts,order=c(2,1))
+
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.5.1 The best fitted model is GARCH(1,1) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq1)
+```
+```{r}
+write.csv(residuals(mpq1), "residual5.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq1$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,1) is that it has smaller sum of squared residuals than GARCH(1,2) and GARCH(2,2). Even tough GARCH(2,1) has smaller sum of squared residuals than GARCH(1,1), it cannot produce meaningful volatiliies. It produce NA for all standard deviation and p-vals in the summary of the model. Summary for GARCH(2,1) is shown below
+```{r} 
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq3)
+```
+
+### 1.5.2 Some diagnostic results
+
+
+According to the standarized residuals, there might be a slight decrease in mignitude residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 2
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has lighter tails than a normal distribution.
+
+```{r}
+plot(residuals(mpq1),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq1))
+qqline(residuals(mpq1))
+```
+
+```{r}
+acf(residuals(mpq1)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq1,method="squared")
+```
+
+```{r}
+gBox(mpq1,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq1)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq1)))
+```
+
+## 1.6 Dataset 6, stock original ROST, too short, instead, use KO
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 6)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+mpq2 <- garch(x=data_ts,order=c(1,2))
+mpq3 <- garch(x=data_ts,order=c(2,1))
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.6.1 The best fitted model is GARCH(1,2) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq2)
+```
+```{r}
+write.csv(residuals(mpq2), "residual6.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq2$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,2) is that it has smaller sum of squared residuals than GARCH(1,1) and GARCH(2,1). Even though GARCH(2,2) has smaller sum of squared residuals than GARCH(1,2), I did not choose it because it cannot produce meaningful volatilities. It produces NA for Stds and p-vals in summary for the model. The summary for GARCH(2,2) is also shown below.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq4)
+```
+
+### 1.6.2 Some diagnostic results
+
+
+According to the standarized residuals, there might be a slight decrease in mignitude residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 35
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has heavier tails than a normal distribution.
+```{r}
+plot(residuals(mpq2),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq2))
+qqline(residuals(mpq2))
+```
+
+```{r}
+acf(residuals(mpq2)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq2,method="squared")
+```
+
+```{r}
+gBox(mpq2,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq2)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq2)))
+```
+
+## 1.7 Dataset 7, stock SHW
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 7)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+
+mpq2 <- garch(x=data_ts,order=c(1,2))
+
+mpq3 <- garch(x=data_ts,order=c(2,1))
+
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.7.1 The best fitted model is GARCH(1,2) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq2)
+```
+```{r}
+write.csv(residuals(mpq2), "residual7.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq2$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,2) is that it has smaller sum of squared residuals than GARCH(1,1) and GARCH(2,1). Even though GARCH(2,2) has smaller sum of squared residuals than GARCH(1,2), I did not choose it because it cannot produce meaningful volatilities. It produces NA for Stds and p-vals in summary for the model. The summary for GARCH(2,2) is also shown below.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq4)
+```
+
+### 1.7.2 Some diagnostic results
+
+
+According to the standarized residuals, there might be a slight increase in mignitude residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 25
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has much heavier tails than a normal distribution.
+
+
+```{r}
+plot(residuals(mpq2),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq2))
+qqline(residuals(mpq2))
+```
+
+```{r}
+acf(residuals(mpq2)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq2,method="squared")
+```
+
+```{r}
+gBox(mpq2,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq2)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq2)))
+```
+
+## 1.8 Dataset 8, stock original RGEN, too short, instead, use KSS
+
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 8)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+
+mpq2 <- garch(x=data_ts,order=c(1,2))
+
+mpq3 <- garch(x=data_ts,order=c(2,1))
+
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.8.1 The best fitted model is GARCH(1,1) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq1)
+```
+```{r}
+write.csv(residuals(mpq1), "residual8.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq1$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,1) is that it has smaller sum of squared residuals than GARCH(1,2) and GARCH(2,1). Even though GARCH(2,2) has smaller sum of squared residuals than GARCH(1,2), I did not choose it because it cannot produce meaningful volatilities. It produces NA for Stds and p-vals in summary for the model. The summary for GARCH(2,2) is also shown below.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq4)
+```
+
+### 1.8.2 Some diagnostic results
+
+
+According to the standarized residuals, there might be a slight increase in mignitude residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 34
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has much heavier tails than a normal distribution.
+```{r}
+plot(residuals(mpq1),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq1))
+qqline(residuals(mpq1))
+```
+
+```{r}
+acf(residuals(mpq1)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq1,method="squared")
+```
+
+```{r}
+gBox(mpq1,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq1)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq1)))
+```
+
+
+## 1.9 Dataset 9, stock OXY
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 9)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+
+mpq2 <- garch(x=data_ts,order=c(1,2))
+
+mpq3 <- garch(x=data_ts,order=c(2,1))
+
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.9.1 The best fitted model is GARCH(1,1) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq1)
+```
+```{r}
+write.csv(residuals(mpq1), "residual9.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq1$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,1) is that it has the smallest sum of squared residuals, and it can produce meaningful volatilities
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+
+```
+
+### 1.9.2 Some diagnostic results
+
+According to the standarized residuals, there might be a slight decrease in mignitude residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 1 and 10
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has heavier tails than a normal distribution.
+
+```{r}
+plot(residuals(mpq1),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq1))
+qqline(residuals(mpq1))
+```
+
+```{r}
+acf(residuals(mpq1)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq1,method="squared")
+```
+
+```{r}
+gBox(mpq1,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq1)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq1)))
+```
+
+## 1.10 Dataset 10, stock PLD
+
+```{r, results="hide"}
+data = read_xlsx("LiuleYang.xlsx",sheet = 10)
+data = data %>% drop_na()
+data_ts = as.ts(data$`log return`)
+mpq1 <- garch(x=data_ts,order=c(1,1))
+
+mpq2 <- garch(x=data_ts,order=c(1,2))
+
+mpq3 <- garch(x=data_ts,order=c(2,1))
+
+mpq4 <- garch(x=data_ts,order=c(2,2))
+```
+
+### 1.10.1 The best fitted model is GARCH(1,1) with the following estimated parameter values and standard errors.
+```{r}
+summary(mpq1)
+```
+```{r}
+write.csv(residuals(mpq1), "residual10.csv")
+```
+### The sum of squared residuals for final model : 
+```{r}
+res = as.numeric(mpq1$residuals)
+squared_residuals = (res)^2
+squared_residuals = squared_residuals[-1]
+sum(squared_residuals)
+```
+
+### The reason to choose GARCH(1,1) is that it has smaller sum of squared residuals than GARCH(1,2) and GARCH(2,2). Even though GARCH(2,1) has smaller sum of squared residuals than GARCH(1,1), I did not choose it because it cannot produce meaningful volatilities. It produces NA for Stds and p-vals in summary for the model. The summary for GARCH(2,1) is also shown below.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq3)
+```
+
+### 1.10.2 Some diagnostic results
+
+According to the standarized residuals, there might be no residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be no significant lags
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates the data has lighter tails than a normal distribution.
+
+```{r}
+plot(residuals(mpq1),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq1))
+qqline(residuals(mpq1))
+```
+
+```{r}
+acf(residuals(mpq1)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq1,method="squared")
+```
+
+```{r}
+gBox(mpq1,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq1)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq1)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq1)))
+```
+
+## 1.11 Comments on all fitted results with all 10 datasets
+
+Based on all fitted results and diagnostics, we find:
+
+Most best fitted models based on smallest sum of squared residuals are GARCH(1,1) or GARCH(1,2)
+
+Choosing the best model requires tradeoff between signifigance of coefficients and sum of squared residuals
+
+The normality of the dataset are mostly violated
+
+
+# 2 Step 5 (Coding using Julia)
+
+#### Based on Julia code, sample mean mean(1/10, 1/10, . . . , 1/10) = 6.486538420453754e-5, sample std = 0.0021124637864723237
+
+#### Based on julia code,  best (c1, c2, . . . , c10):
+
+c1 = 0.3115601285575642
+
+c2 = 0.00023713278784861185
+
+c3 = 0.0791945452862224
+
+c4 = 0.047750192361686365
+
+c5 = 3.528864892244295e-7
+
+c6 = 0.44615043497520773
+
+c7 = 0.09422298252127383
+
+c8 = 0.020884092140067072
+
+c9 = 1.0580786983566397e-7
+
+c10 = 3.267577070260201e-8
+
+#### Based on Julia code, best mean = 9.576383514741715e-5, best std = 0.002108071090099116
+
+
+#### optimization procedue: create a linear model that is maximizing rt(c1, c2, . . . , c10) = c1r1t + c2r2t + · · · + c10r10t; using constraints c1+...+c10 = 1 and std(c1...c10) < std(1/10,...1/10)
+
+
+
+
+# 3 Step 6 (Coding using Julia)
+
+#### Based on Julia code, sample mean mean(1/10, 1/10, . . . , 1/10) = 0.01152753941902732, sample std = 0.29901350833236223
+
+#### Based on julia code,  best (c1, c2, . . . , c10):
+
+c1 = 0.16587130821544155
+
+c2 = 0.08765513524574796
+
+c3 = 0.06508863337282712
+
+c4 = 0.09353599781499235
+
+c5 = 0.03349621242995188
+
+c6 = 0.0963881839187943
+
+c7 = 0.1130426416947271
+
+c8 = 0.18633327492997429
+
+c9 = 0.1402321690766196
+
+c10 = 0.018356443297892877
+
+#### Based on Julia code, best mean = 0.018131744218799623, best std = 0.002007201222693568
+
+
+#### optimization procedue: create a linear model that is maximizing et(c1, c2, . . . , c10) = c1r1t + c2r2t + · · · + c10r10t; using constraints c1+...+c10 = 1 and std(c1...c10) < std(1/10,...1/10)
+
+
+
+
+# 4 Step 7 (Coding using Julia)
+
+#### Based on Julia code, sample mean mean(1/10, 1/10, . . . , 1/10) = 0.0001750715239256068, sample std = 0.005154146795999198
+
+#### Based on julia code,  best (c1, c2, . . . , c10):
+
+c1 = 0.05558510440433964
+
+c2 = 0.016056338583862826
+
+c3 = 0.3712425759115375
+
+c4 = 8.630060584228522e-8
+
+c5 = 0.0
+
+c6 = 0.3541830764801036
+
+c7 = 0.20293283513735427
+
+c8 = 0.0
+
+c9 = 0.0
+
+c10 = 0.0
+
+#### Based on Julia code, best mean = 0.00021825430842049168, best std = 0.004921654738197381
+
+
+#### optimization procedue: create a nonlinear!!!(this time is nonlinear) model that is maximizing rpt(c1, c2, . . . , c10); using constraints c1+...+c10 = 1 and std(c1...c10) < std(1/10,...1/10)
+
+
+```{r}
+data1 = read_xlsx("LiuleYang.xlsx",sheet = 1)
+data1 = data1 %>% drop_na()
+data_ts1 = as.ts(data1$`log return`)
+
+data2 = read_xlsx("LiuleYang.xlsx",sheet = 2)
+data2 = data2 %>% drop_na()
+data_ts2 = as.ts(data2$`log return`)
+
+data3 = read_xlsx("LiuleYang.xlsx",sheet = 3)
+data3 = data3 %>% drop_na()
+data_ts3 = as.ts(data3$`log return`)
+
+data4 = read_xlsx("LiuleYang.xlsx",sheet = 4)
+data4 = data4 %>% drop_na()
+data_ts4 = as.ts(data4$`log return`)
+
+data5 = read_xlsx("LiuleYang.xlsx",sheet = 5)
+data5 = data5 %>% drop_na()
+data_ts5 = as.ts(data5$`log return`)
+
+data6 = read_xlsx("LiuleYang.xlsx",sheet = 6)
+data6 = data6 %>% drop_na()
+data_ts6 = as.ts(data6$`log return`)
+
+data7 = read_xlsx("LiuleYang.xlsx",sheet = 7)
+data7 = data7 %>% drop_na()
+data_ts7 = as.ts(data7$`log return`)
+
+data8 = read_xlsx("LiuleYang.xlsx",sheet = 8)
+data8 = data8 %>% drop_na()
+data_ts8 = as.ts(data8$`log return`)
+
+data9 = read_xlsx("LiuleYang.xlsx",sheet = 9)
+data9 = data9 %>% drop_na()
+data_ts9 = as.ts(data9$`log return`)
+
+data10 = read_xlsx("LiuleYang.xlsx",sheet = 10)
+data10 = data10 %>% drop_na()
+data_ts10 = as.ts(data10$`log return`)
+```
+
+# 5 Step 8
+
+### 8.1 
+
+```{r, results="hide"}
+new_ts = rep(0, length(data_ts1) - 1)
+for(i in 1:(length(data_ts1) - 1)){
+  new_ts[i] = 0.1*data_ts1[i] + 0.1*data_ts2[i] + 0.1*data_ts3[i] + 0.1*data_ts4[i]+ 0.1*data_ts5[i]+ 0.1*data_ts6[i]+ 0.1*data_ts7[i]+ 0.1*data_ts8[i]+ 0.1*data_ts9[i]+ 0.1*data_ts10[i] 
+}
+
+mpq1 <- garch(x=new_ts,order=c(1,1))
+
+mpq2 <- garch(x=new_ts,order=c(1,2))
+
+mpq3 <- garch(x=new_ts,order=c(2,1))
+
+mpq4 <- garch(x=new_ts,order=c(2,2))
+```
+
+### The best fitted model is GARCH(1,2) with the following estimated parameter values and standard errors.
+
+```{r}
+summary(mpq2)
+```
+
+### The sum of squared residuals for final model : 
+```{r}
+res1 = as.numeric(residuals(mpq2))
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+```
+
+
+### The reason to choose GARCH(1,2) is that it has smaller sum of squared residuals than GARCH(1,1) and GARCH(2,2). Even though GARCH(2,1) has smaller sum of squared residuals than GARCH(1,2), I did not choose it because it cannot produce meaningful volatilities. It produces NA for Stds and p-vals in summary for the model. The summary for GARCH(2,1) is also shown below.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq3)
+```
+
+### 8.2 Some diagnostic results
+
+According to the standarized residuals, there is no apparent residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 10 and 26
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates platykurtic since it's less than 3. 
+
+```{r}
+plot(residuals(mpq2),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq2))
+qqline(residuals(mpq2))
+```
+
+```{r}
+acf(residuals(mpq2)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq2,method="squared")
+```
+
+```{r}
+gBox(mpq2,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq2)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq2)))
+```
+
+
+
+# 6 Step 9
+
+### 9.1
+```{r}
+price1 = as.ts(data1$`Close`)
+price2 = as.ts(data2$`Close`)
+price3 = as.ts(data3$`Close`)
+price4 = as.ts(data4$`Close`)
+price5 = as.ts(data5$`Close`)
+price6 = as.ts(data6$`Close`)
+price7 = as.ts(data7$`Close`)
+price8 = as.ts(data8$`Close`)
+price9 = as.ts(data9$`Close`)
+price10 = as.ts(data10$`Close`)
+```
+
+```{r, results="hide"}
+new_ts = rep(0, length(data_ts1) - 1)
+for(i in 1:(length(data_ts1) - 1)){
+  new_ts[i] =  log10(( 0.05558510440433964*price1[i+1]+0.016056338583862826*price2[i+1]+0.3712425759115375*price3[i+1]
+                       +8.630060584228522e-8*price4[i+1]+0.3541830764801036*price6[i+1]+0.20293283513735427*price7[i+1])/
+                       (0.05558510440433964*price1[i]+0.016056338583862826*price2[i]+0.3712425759115375*price3[i]
+                       +8.630060584228522e-8*price4[i]+0.3541830764801036*price6[i]+0.20293283513735427*price7[i]))
+}
+
+mpq1 <- garch(x=new_ts,order=c(1,1))
+
+mpq2 <- garch(x=new_ts,order=c(1,2))
+
+mpq3 <- garch(x=new_ts,order=c(2,1))
+
+mpq4 <- garch(x=new_ts,order=c(2,2))
+```
+
+### The best fitted model is GARCH(1,2) with the following estimated parameter values and standard errors.
+
+```{r}
+summary(mpq2)
+```
+
+### The sum of squared residuals for final model : 
+```{r}
+res1 = as.numeric(residuals(mpq2))
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+```
+
+
+### The reason to choose GARCH(1,2) is that it has smaller sum of squared residuals than GARCH(1,1) and GARCH(2,1). Even though GARCH(2,2) has smaller sum of squared residuals than GARCH(1,2), I did not choose it because it cannot produce meaningful volatilities. It produces NA for Stds and p-vals in summary for the model. The summary for GARCH(2,2) is also shown below.
+```{r}
+print("GARCH(1,1)")
+res1 = as.numeric(mpq1$residuals)
+squared_residuals1 = (res1)^2
+squared_residuals1 = squared_residuals1[-1]
+sum(squared_residuals1)
+print("GARCH(1,2)")
+res2 = as.numeric(mpq2$residuals)
+squared_residuals2 = (res2)^2
+squared_residuals2 = squared_residuals2[-1]
+squared_residuals2 = squared_residuals2[-1]
+sum(squared_residuals2)
+print("GARCH(2,1)")
+res3 = as.numeric(mpq3$residuals)
+squared_residuals3 = (res3)^2
+squared_residuals3 = squared_residuals3[-1]
+squared_residuals3 = squared_residuals3[-1]
+sum(squared_residuals3)
+print("GARCH(2,2)")
+res4 = as.numeric(mpq4$residuals)
+squared_residuals4 = (res4)^2
+squared_residuals4 = squared_residuals4[-1]
+squared_residuals4 = squared_residuals4[-1]
+sum(squared_residuals4)
+summary(mpq4)
+```
+
+### 9.2 Some diagnostic results
+
+According to the standarized residuals, there might be a slight increasing in magnitude residual pattern in votality. 
+
+The QQ plot shows somewhat violation of normality. Shapiro-wilk test and jarque bera test have both p-values smaller than 0.05, which means we can reject normality. 
+
+ACF shows that there might be significant lags at 10 and 32
+
+Skewness shows that the data is skewed to left,and kurtosis test indicates platykurtic since it's less than 3. 
+
+```{r}
+plot(residuals(mpq2),type="h",ylab="standardized residuals")
+```
+
+```{r}
+qqnorm(residuals(mpq2))
+qqline(residuals(mpq2))
+```
+
+```{r}
+acf(residuals(mpq2)^2,na.action=na.omit)
+```
+
+```{r}
+gBox(mpq2,method="squared")
+```
+
+```{r}
+gBox(mpq2,lags=20, plot=F,method="squared")$pvalue
+```
+
+```{r}
+shapiro.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+jarque.bera.test(na.omit(residuals(mpq2)))
+```
+
+```{r}
+skewness(na.omit(residuals(mpq2)))
+```
+
+```{r}
+kurtosis(na.omit(residuals(mpq2)))
+```
+
+# 7 Step 10
+
+### For the best fitted vectors(c1...c10),they are not the same and the difference is obvious. The best fitting vectors in step5 and step6 uses all c1 to c10, while the best fitting vector in step7 only uses c1 to c4 and c6, c7.
+
+### The best mean values are very different from step5 to 7. Step6 produces the largest mean while step5 produces the smallest.
+
+### The reason that they are so different is because the computational methods and the original data are very different. When comparing step5 and step7, the different computation methods for the log function induce the difference. The data in step6 is the residuals from models, which makes is far different from two others.
